@@ -10,7 +10,9 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.ItemStack;
 
 public class ItemListeners implements Listener {
 
@@ -107,16 +109,16 @@ public class ItemListeners implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onClick(PlayerInteractEvent event) {
         final Player player = event.getPlayer();
+        final ItemStack item = player.getItemInHand();
 
-        if (player.getItemInHand() == null
-                || player.getItemInHand().getType() == Material.AIR
+        if (item == null || item.getType() == Material.AIR
                 || (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK)) {
             return;
         }
 
         for (Hotbar hotbar : bulla.getHotbars()) {
             for (ClickableItem items : hotbar.getCachedItems().values()) {
-                if (items.getItemStack().isSimilar(player.getItemInHand())) {
+                if (items.getItemStack().isSimilar(item)) {
                     event.setCancelled(true);
                     event.setUseItemInHand(Event.Result.DENY);
                     event.setUseInteractedBlock(Event.Result.DENY);
@@ -124,11 +126,34 @@ public class ItemListeners implements Listener {
                     if (items.getClickHandler() == null) {
                         continue;
                     }
-                    items.getClickHandler().click(player);
+                    items.getClickHandler().click(player, null);
                     return;
                 }
             }
         }
     }
 
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onClickEntity(PlayerInteractEntityEvent event) {
+        final Player player = event.getPlayer();
+        final ItemStack item = player.getItemInHand();
+
+        if (item == null || item.getType() == Material.AIR){
+            return;
+        }
+
+        for (Hotbar hotbar : bulla.getHotbars()) {
+            for (ClickableItem items : hotbar.getCachedItems().values()) {
+                if (items.getItemStack().isSimilar(item)) {
+                    event.setCancelled(true);
+                    player.updateInventory();
+                    if (items.getClickHandler() == null) {
+                        continue;
+                    }
+                    items.getClickHandler().click(player, event.getRightClicked());
+                    return;
+                }
+            }
+        }
+    }
 }
