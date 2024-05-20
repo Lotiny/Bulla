@@ -76,9 +76,8 @@ public abstract class Hotbar {
      */
     public void applyToPlayer(Player player, boolean clear) {
         if (clear) {
-            for (int i = 0; i < 8; i++) {
-                player.getInventory().setItem(i, null);
-            }
+            player.getInventory().clear();
+            player.getInventory().setArmorContents(null);
         }
         Map<Integer, ClickableItem> itemsToApply = itemsToApply(player);
         for (Integer slot : itemsToApply.keySet()) {
